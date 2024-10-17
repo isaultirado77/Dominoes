@@ -19,7 +19,7 @@ class Box:
     def show_pieces(self) -> None:
         print(self.arr)
 
-    def get_piece(self) -> list:
+    def give_piece(self) -> list:
         piece = random.choice(self.arr)
         self.arr.remove(piece)
         return piece
@@ -39,7 +39,7 @@ class Player(ABC):
         self.pieces = []
 
     @abstractmethod
-    def move(self):
+    def move(self, index: int):
         pass
 
     def take_piece(self, piece: list) -> None:
@@ -72,14 +72,22 @@ class Player(ABC):
     def get_total_pieces(self) -> int:
         return len(self.pieces)
 
+    def get_piece_by_index(self, index: int):
+        return self.pieces[index]
+
 
 class Human(Player):
     def __init__(self, name: str = None):
         super().__init__(name)
 
-    def move(self) -> None:
-        print(f'{self.name} -> moving...')
-        pass
+    def move(self, index: int):
+        if index == 0:
+            return None
+        else:
+            if index < 0:  # Place piece to left
+                return 0, self.get_piece_by_index(abs(index))
+            if index > 0:  # Place piece to right
+                return -1, self.get_piece_by_index(index)
 
     def __str__(self):
         return 'Player'
@@ -89,9 +97,11 @@ class Computer(Player):
     def __init__(self, name: str = None):
         super().__init__(name)
 
-    def move(self) -> None:
-        print(f'{self.name} -> calculating...')
-        pass
+    def move(self, index: int = None):
+        total_pieces = self.get_total_pieces()
+        index = random.randint(1 - total_pieces, total_pieces - 1)
+        piece = self.get_piece_by_index(index)
+        return piece
 
     def __str__(self):
         return 'Computer'
@@ -102,13 +112,14 @@ class Engine:
         self.box = Box()
         self.human = Human()
         self.bot = Computer()
-        self.isHumanTurn = True
+        self.is_human_turn = True
+        self.current_player = self.human
         self.snake = []
 
     def deal_dominoes(self) -> None:
         for i in range(7):
-            human_piece = self.box.get_piece()
-            bot_piece = self.box.get_piece()
+            human_piece = self.box.give_piece()
+            bot_piece = self.box.give_piece()
             self.human.take_piece(human_piece)
             self.bot.take_piece(bot_piece)
 
@@ -130,7 +141,8 @@ class Engine:
                 self.human.drop_piece(human_snake)
 
     def switch_turn(self) -> None:
-        self.isHumanTurn = not self.isHumanTurn
+        self.is_human_turn = not self.is_human_turn
+        self.current_player = self.human if self.is_human_turn else self.bot
 
     def clear_players_box(self) -> None:
         self.bot.clear_box()
@@ -142,7 +154,7 @@ class Engine:
     def get_status(self) -> str:
         human_move = 'It\'s your turn to make a move. Enter your command.'
         bot_move = 'Computer is about to make a move. Press Enter to continue...'
-        return f'Status: {bot_move if self.isHumanTurn else human_move}'
+        return f'Status: {bot_move if self.is_human_turn else human_move}'
 
     def display_player_pieces(self):
         pieces = self.human.get_pieces()
@@ -150,6 +162,17 @@ class Engine:
         for i, piece in enumerate(pieces):
             print(f'{i + 1}:{piece}')
         print()
+
+    def prompt_player_move(self) -> int:
+        while True:
+            try:
+                move = int(input())
+                if abs(move) < self.human.get_total_pieces():
+                    return move
+                else:
+                    print("Error: Enter a valid index. ")
+            except ValueError:
+                print("Error: Enter a valid number.")
 
     def display_game_state(self):
         print('======================================================================')
