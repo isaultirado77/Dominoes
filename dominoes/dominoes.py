@@ -88,14 +88,26 @@ class Human(Player):
         super().__init__(name)
         self.set_move_msg('It\'s your turn to make a move. Enter your command.')
 
-    def move(self, index: int):
+    def prompt_player_move(self) -> int:
+        while True:
+            try:
+                move = int(input())
+                if abs(move) < self.get_total_pieces() + 1:
+                    return move
+                else:
+                    print("Error: Enter a valid index. ")
+            except ValueError:
+                print("Error: Enter a valid number.")
+
+    def move(self, **kwargs):
+        index = self.prompt_player_move()
         if index == 0:
-            return None
+            return None, None
         else:
             if index < 0:  # Place piece to left
-                return 0, self.get_piece_by_index(abs(index))
+                return 0, self.get_piece_by_index(abs(index) - 1)
             if index > 0:  # Place piece to right
-                return -1, self.get_piece_by_index(index)
+                return -1, self.get_piece_by_index(index - 1)
 
     def __str__(self):
         return 'Player'
@@ -107,10 +119,11 @@ class Computer(Player):
         self.set_move_msg('Computer is about to make a move. Press Enter to continue...')
 
     def move(self, index: int = None):
+        input()
         total_pieces = self.get_total_pieces()
         index = random.randint(1 - total_pieces, total_pieces - 1)
         piece = self.get_piece_by_index(index)
-        return piece
+        return 0 if index < 0 else -1, piece
 
     def __str__(self):
         return 'Computer'
@@ -157,7 +170,7 @@ class Engine:
         self.human.clear_box()
 
     def get_snake(self) -> str:
-        return '\n'.join(str(segment) for segment in self.snake)
+        return ''.join(str(segment) for segment in self.snake)
 
     def get_status(self) -> str:
         move_msg = self.current_player.get_move_msg()
@@ -170,18 +183,7 @@ class Engine:
             print(f'{i + 1}:{piece}')
         print()
 
-    def prompt_player_move(self) -> int:
-        while True:
-            try:
-                move = int(input())
-                if abs(move) < self.human.get_total_pieces():
-                    return move
-                else:
-                    print("Error: Enter a valid index. ")
-            except ValueError:
-                print("Error: Enter a valid number.")
-
-    def display_game_state(self):
+    def display_interface(self):
         print('======================================================================')
         print('Stock size:', self.box.get_size())
         print('Computer pieces:', self.bot.get_total_pieces(), '\n')
@@ -189,19 +191,33 @@ class Engine:
         self.display_player_pieces()
         print('Status:', self.get_status())
 
-    @staticmethod
-    def get_engine():
-        return Engine()
+    def make_move(self):
+        index, piece = self.current_player.move()
+        if not index and not piece:  # Take a piece
+            piece = self.box.give_piece()
+            self.current_player.take_piece(piece)
+        else:
+            # Insert piece at the given index on the snake
+            if index == 0:  # Insert at the left of the snake
+                self.snake.insert(0, piece)
+            else:  # Insert at the right of the snake
+                self.snake.append(piece)
+            # Drop piece from the current player stock
+            self.current_player.drop_piece(piece)
 
 
 class Controller:
     def __init__(self):
-        self.engine = Engine.get_engine()
+        self.engine = Engine()
 
     def run(self):
         self.engine.deal_dominoes()
         self.engine.get_first_player()
-        self.engine.display_game_state()
+        self.engine.display_interface()
+        while True:
+            self.engine.make_move()
+            self.engine.switch_turn()
+            self.engine.display_interface()
 
 
 def main():
