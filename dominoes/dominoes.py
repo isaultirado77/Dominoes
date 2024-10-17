@@ -1,4 +1,5 @@
 # Project: Dominoes
+
 import random
 import math
 from abc import ABC, abstractmethod
@@ -23,9 +24,12 @@ class Box:
         self.arr.remove(piece)
         return piece
 
-    def reset_box(self):
+    def reset_box(self) -> None:
         self.arr.clear()
         self.generate_pieces()
+
+    def get_size(self) -> int:
+        return len(self.arr)
 
 
 class Player(ABC):
@@ -55,22 +59,25 @@ class Player(ABC):
                     max_sum = current_sum
             return [int(max_sum / 2), int(max_sum / 2)]
 
-    def get_pieces(self):
+    def get_pieces(self) -> list:
         return self.pieces
 
     def drop_piece(self, piece: list) -> None:
         if piece:
             self.pieces.remove(piece)
 
-    def clear_box(self):
+    def clear_box(self) -> None:
         self.pieces.clear()
+
+    def get_total_pieces(self) -> int:
+        return len(self.pieces)
 
 
 class Human(Player):
     def __init__(self, name: str = None):
         super().__init__(name)
 
-    def move(self):
+    def move(self) -> None:
         print(f'{self.name} -> moving...')
         pass
 
@@ -122,19 +129,35 @@ class Engine:
                 self.snake.append(human_snake)
                 self.human.drop_piece(human_snake)
 
-    def switch_turn(self):
+    def switch_turn(self) -> None:
         self.isHumanTurn = not self.isHumanTurn
 
-    def clear_players_box(self):
+    def clear_players_box(self) -> None:
         self.bot.clear_box()
         self.human.clear_box()
 
+    def get_snake(self) -> str:
+        return '\n'.join(str(segment) for segment in self.snake)
+
+    def get_status(self) -> str:
+        human_move = 'It\'s your turn to make a move. Enter your command.'
+        bot_move = 'Computer is about to make a move. Press Enter to continue...'
+        return f'Status: {bot_move if self.isHumanTurn else human_move}'
+
+    def display_player_pieces(self):
+        pieces = self.human.get_pieces()
+        print('Your pieces:')
+        for i, piece in enumerate(pieces):
+            print(f'{i + 1}:{piece}')
+        print()
+
     def display_game_state(self):
-        print('Stock pieces:', self.box.arr)
-        print('Computer pieces:', self.bot.get_pieces())
-        print('Player pieces:', self.human.get_pieces())
-        print('Domino snake:', self.snake)
-        print('Status:', self.bot if self.isHumanTurn else self.human)
+        print('======================================================================')
+        print('Stock size:', self.box.get_size())
+        print('Computer pieces:', self.bot.get_total_pieces(), '\n')
+        print(self.get_snake(), '\n')
+        self.display_player_pieces()
+        print('Status:', self.get_status())
 
     @staticmethod
     def get_engine():

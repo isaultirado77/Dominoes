@@ -1,3 +1,3 @@
-from test.tests import TestStage1
+from test.tests import TestStage2
 
-if __name__ == '__main__':    TestStage1('dominoes.dominoes').run_tests()
+if __name__ == '__main__':    TestStage2('dominoes.dominoes').run_tests()

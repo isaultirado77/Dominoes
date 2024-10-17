@@ -1,100 +1,124 @@
 from typing import List, Any
-import ast
 from hstest import StageTest, CheckResult, WrongAnswer, TestCase
+import ast
 
 
-class TestStage1(StageTest):
+class TestStage2(StageTest):
 
     def generate(self) -> List[TestCase]:
         return [
             TestCase(),
             TestCase(),
-            TestCase(),
-            TestCase(),
             TestCase()
         ]
 
-    def get_list(self, replyks):
-        ind = replyks.find('[')
+    def get_the_stock(self, reply):
+        """Get the player's stock"""
+        if reply.find("0:") == -1:
+            try:
+                ind = reply.find("1:")
+                ind2 = reply.lower().find("status")
+                if ind2 == -1:
+                    raise WrongAnswer("Print the status of the game in the format: \"Status:[Message]\"")
+                list_stack = reply[ind:ind2].strip().split('\n')
+                stock = [i.split(':')[1].strip() for i in list_stack]
+                try:
+                    stock = [ast.literal_eval(i) for i in stock]
+                except (ValueError, SyntaxError):
+                    raise WrongAnswer("An error occurred while processing your output.\n"
+                                      "Please make sure that your program's output is formatted exactly as described.")
+                return stock
+            except Exception:
+                raise WrongAnswer("Please, output all pieces in the format: \"N:[N1, N2]\"\n"	
+                                  "Don't forget the colon character as a separator.")
+        raise WrongAnswer("When you print the player's pieces, the numbering should start from 1, not 0.")
+
+    def check_the_stock(self, reply):
+        """Check that the pieces in the player stock are unique"""
+
+        uniq = self.get_the_stock(reply)
+        len1 = len(uniq)
         try:
-            return ast.literal_eval(replyks[ind:])
-        except (ValueError, SyntaxError):
-            raise WrongAnswer("An error occurred while processing your output.\n"
-                              "Please make sure that your program's output is formatted exactly as described.")
-
-    def get_all_lists(self, replyk):
-        sp = self.get_list(replyk[0])
-        cp = self.get_list(replyk[1])
-        pp = self.get_list(replyk[2])
-        ds = self.get_list(replyk[3])
-        return sp, cp, pp, ds
-
-    def get_the_fish(self, computer_pieces, player_pieces, domino_snake):
-        status_check = 'computer' if len(computer_pieces) == 7 else 'player'
-        double_computer_pieces = sorted([i for i in computer_pieces if i[0] == i[1]], reverse=True)
-        double_player_pieces = sorted([i for i in player_pieces if i[0] == i[1]], reverse=True)
-        high_double_computer_piece = double_computer_pieces[0] if len(double_computer_pieces) > 0 else []
-        high_double_player_piece = double_player_pieces[0] if len(double_player_pieces) > 0 else []
-        domino_snake = domino_snake[0] if domino_snake[0][0] == domino_snake[0][1] else []
-        maxes = sorted([domino_snake, high_double_computer_piece, high_double_player_piece], reverse=True)
-        return maxes[0], status_check
-
-    def check_nested_lists(self, list_to_check, list_name):
-        if not list_to_check or type(list_to_check) != list or any([type(item) != list for item in list_to_check]):
-            raise WrongAnswer("{0} list in your output is not a nested list. \n"
-                              "Please, make it a nested list.".format(list_name))
-
-    def count_unique(self, replyk):
-        sp, cp, pp, ds = self.get_all_lists(replyk)
-        self.check_nested_lists(sp, "Stock pieces")
-        self.check_nested_lists(cp, "Computer pieces")
-        self.check_nested_lists(pp, "Player pieces")
-        self.check_nested_lists(ds, "Domino snake")
-        sp += cp
-        sp += pp
-        sp += ds
-        sp = [tuple(i) for i in sp]
-        try:
-            return len(set(sp))
-        except:
+            uniq = set([tuple(i) for i in uniq])
+        except TypeError:
+            raise WrongAnswer("An error occurred while tests were processing your output.\n"
+                              "Make sure you output pieces in the required format.")
+        len2 = len(uniq)
+        if len1 != len2:
             return False
+        return True
 
-    def check(self, reply: str, attach: Any) -> CheckResult:
-        replyk = reply.strip().split('\n')
-        if len(replyk) != 5:
-            return CheckResult.wrong(f"Expected exactly 5 lines in your output, found {len(replyk)}")
-        for i, st in enumerate(['Stock', 'Computer', 'Player', 'Domino', 'Status']):
-            if not replyk[i].strip().lower().startswith(st.lower()):
-                return CheckResult.wrong(f"{i} line of your output should start with \"{st}\" substring as in example")
-        stock_pieces, computer_pieces, player_pieces, domino_snake = self.get_all_lists(replyk)
-        if not self.count_unique(replyk):
-            return CheckResult.wrong("The full set is not right. "
-                                     "Make sure the full comprises 28 unique domino pieces.")
-        if len(stock_pieces) != 14:
-            return CheckResult.wrong(f"Expected 14 stock pieces, found {len(stock_pieces)}")
-        if len(stock_pieces) + len(computer_pieces) + len(player_pieces) + len(domino_snake) != 28:
-            return CheckResult.wrong(f"Expected 28 pieces in your output in total, found "
-                                     f"{len(stock_pieces) + len(computer_pieces) + len(player_pieces) + len(domino_snake)}")
-        if len(computer_pieces) + len(player_pieces) + len(domino_snake) != 14:
-            return CheckResult.wrong("The pieces played are not right")
-        if len(domino_snake) != 1:
-            return CheckResult.wrong("The domino snake should have exactly one piece.")
+    def check_the_snake(self, reply, ds):
+        """Check that the domino snake is really the maximum"""
+
+        stock = self.get_the_stock(reply)
+        stock = [i for i in stock if i[0] == i[1]]
+        if len(stock) > 0:
+            if ds and type(ds[0]) != int:
+                raise WrongAnswer("The domino snake is supposed to be a list containing two integers.\n"
+                                  "Please, make sure you output the domino snake in the required format.")
+            if ds < sorted(stock, reverse=True)[0]:
+                return False
+        return True
+
+    def check_the_length(self, reply, cs):
+        stock = self.get_the_stock(reply)
+        opt = len(stock) == 7 and cs == 6
+        opt2 = len(stock) == 6 and cs == 7
+        if not (opt or opt2):
+            return False
+        return True
+
+    def check_the_status(self, reply, cs):
+        """Check if the status is right"""
+
+        opt = cs == 7 and "computer is" in reply.lower()
+        opt2 = cs == 6 and "your turn" in reply
+        if not (opt or opt2):
+            return False
+        return True
+
+    def check(self, reply: list, attach: Any) -> CheckResult:
+        if not self.check_the_stock(reply):
+            return CheckResult.wrong("Your pieces are not unique")
+        replyk = [i for i in reply.split('\n') if i.strip()]
+        if "=" in replyk[0].strip() and replyk[0].strip() != "=" * 70:
+            return CheckResult.wrong("The design is not right. "
+                                     "You need to print the header using 70 equal sign characters (=), "
+                                     f"but {len(replyk[0].strip())} characters were found.")
+        elif "=" not in reply[0].strip():
+            return CheckResult.wrong("The design is not right. "
+                                     "You need to print the header using 70 equal sign characters (=).")
         try:
-            domino_snake_check, status_check = self.get_the_fish(computer_pieces, player_pieces, domino_snake)
-        except Exception:
-            return CheckResult.wrong("Something wrong with output format! "
-                                     "Make sure your output format is the same as in examples!")
-        if domino_snake[0] != domino_snake_check:
-            return CheckResult.wrong("Domino snake is not right. "
-                                     "Please make sure the starting domino is the highest double domino.\n"
-                                     f"Expected: {domino_snake_check}")
-        if status_check not in replyk[4].lower():
-            return CheckResult.wrong("Status is not right. "
-                                     "Please make sure that the status is the one, who is to make the next move "
-                                     "(the one who is left with 7 pieces after pieces were distributed)")
+            stock_size = int(replyk[1].split()[-1])
+        except ValueError:
+            raise WrongAnswer("The stock size doesn't seem to be printed in the correct format. \n"
+                              "Please, output it in the format: \"Stock size: N\",\n"
+                              "where N is a number.")
+        if stock_size != 14:
+            return CheckResult.wrong("The stock is not right")
+        try:
+            domino_snake = ast.literal_eval(replyk[3])
+        except (IndentationError, SyntaxError, ValueError):
+            raise WrongAnswer("Domino pieces don't seem to be printed in the correct format.")
 
+        if not self.check_the_snake(reply, domino_snake):
+            return CheckResult.wrong("The domino snake should be the maximum")
+        try:
+            cs = int(replyk[2].split()[-1])
+        except ValueError:
+            raise WrongAnswer("Computer pieces don't seem to be printed in the correct format. \n"
+                              "Please, output them in the format: \"Computer pieces: N\",\n"
+                              "where N is a number.")
+        if not 6 <= cs <= 7:
+            return CheckResult.wrong("The computer pieces are not right")
+        if not self.check_the_length(reply, cs):
+            return CheckResult.wrong("Something is not right about the pieces played")
+        if not self.check_the_status(reply, cs):
+            return CheckResult.wrong("The status of the game is wrong. "
+                                     "Please, make sure that the status is the player, who is to make the next move.")
         return CheckResult.correct()
 
 
 if __name__ == '__main__':
-    TestStage1('dominoes.dominoes').run_tests()
+    TestStage2('dominoes.dominoes').run_tests()
