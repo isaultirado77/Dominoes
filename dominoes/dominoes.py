@@ -3,6 +3,7 @@
 import random
 import math
 from abc import ABC, abstractmethod
+from enum import Enum
 
 
 class Box:
@@ -95,9 +96,9 @@ class Human(Player):
                 if abs(move) < self.get_total_pieces() + 1:
                     return move
                 else:
-                    print("Error: Enter a valid index. ")
+                    print("Invalid input. Please try again. ")
             except ValueError:
-                print("Error: Enter a valid number.")
+                print("Invalid input. Please try again.")
 
     def move(self, **kwargs):
         index = self.prompt_player_move()
@@ -136,6 +137,7 @@ class Engine:
         self.bot = Computer()
         self.current_player = self.human
         self.snake = []
+        self.game_state = GameState.IN_PROGRESS
 
     def deal_dominoes(self) -> None:
         for i in range(7):
@@ -173,17 +175,24 @@ class Engine:
         return ''.join(str(segment) for segment in self.snake)
 
     def get_status(self) -> str:
-        move_msg = self.current_player.get_move_msg()
-        return f'Status: {move_msg}'
+        if self.game_state == GameState.GAME_OVER:
+            if isinstance(self.current_player, Player):
+                return 'The game is over. You won!'
+            else:
+                return 'The game is over. The computer won!'
+        elif self.game_state == GameState.DRAW:
+            return 'The game is over. It\'s a draw!'
+        else:
+            return self.current_player.get_move_msg()
 
-    def display_player_pieces(self):
+    def display_player_pieces(self) -> None:
         pieces = self.human.get_pieces()
         print('Your pieces:')
         for i, piece in enumerate(pieces):
             print(f'{i + 1}:{piece}')
         print()
 
-    def display_interface(self):
+    def display_interface(self) -> None:
         print('======================================================================')
         print('Stock size:', self.box.get_size())
         print('Computer pieces:', self.bot.get_total_pieces(), '\n')
@@ -191,7 +200,7 @@ class Engine:
         self.display_player_pieces()
         print('Status:', self.get_status())
 
-    def make_move(self):
+    def make_move(self) -> None:
         index, piece = self.current_player.move()
         if not index and not piece:  # Take a piece
             piece = self.box.give_piece()
@@ -205,6 +214,35 @@ class Engine:
             # Drop piece from the current player stock
             self.current_player.drop_piece(piece)
 
+    def change_game_state(self, state) -> None:
+        self.game_state = state
+
+    def is_win(self) -> bool:
+        return self.current_player.get_total_pieces() == 0  # One of the players runs out of pieces
+
+    def is_draw(self):
+        first = self.snake[0][0]
+        last = self.snake[-1][-1]
+        if first == last:
+            count = 0
+            for piece in self.snake:
+                if first in piece:
+                    count += 1
+            return count == 8
+        return False
+
+    def check_game_state(self) -> None:
+        if self.is_win():
+            self.change_game_state(GameState.GAME_OVER)
+        elif self.is_draw():
+            self.change_game_state(GameState.DRAW)
+
+
+class GameState(Enum):
+    IN_PROGRESS = "The game is in progress."
+    GAME_OVER = "The game is over."
+    DRAW = "It's a draw."
+
 
 class Controller:
     def __init__(self):
@@ -214,7 +252,7 @@ class Controller:
         self.engine.deal_dominoes()
         self.engine.get_first_player()
         self.engine.display_interface()
-        while True:
+        while self.engine.game_state == GameState.IN_PROGRESS:
             self.engine.make_move()
             self.engine.switch_turn()
             self.engine.display_interface()
