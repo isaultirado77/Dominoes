@@ -212,6 +212,19 @@ class Engine:
         self.display_player_pieces()
         print('Status:', self.get_status())
 
+    def validate_move(self, move: list):
+        if isinstance(self.current_player, Human):
+            pass
+        else:
+            pass
+
+    @staticmethod
+    def flip_piece(piece: list):
+        aux = piece[0]
+        piece[0] = piece[1]
+        piece[1] = aux
+        return piece
+
     def make_move(self) -> None:
         index, piece = self.current_player.move()
         if not index and not piece:  # Take a piece
