@@ -176,7 +176,7 @@ class Engine:
 
     def get_status(self) -> str:
         if self.game_state == GameState.GAME_OVER:
-            if isinstance(self.current_player, Player):
+            if self.human.get_total_pieces() == 0:
                 return 'The game is over. You won!'
             else:
                 return 'The game is over. The computer won!'
@@ -192,11 +192,23 @@ class Engine:
             print(f'{i + 1}:{piece}')
         print()
 
+    def display_snake(self) -> None:
+        length = len(self.snake)
+        right_limit = length - 3
+        if length > 6:
+            left = self.snake[:3]
+            right = self.snake[right_limit:]
+            left_str = ''.join(str(item) for item in left)
+            right_str = ''.join(str(item) for item in right)
+            print(left_str + '...' + right_str + '\n')
+        else:
+            print(self.get_snake(), '\n')
+
     def display_interface(self) -> None:
         print('======================================================================')
         print('Stock size:', self.box.get_size())
         print('Computer pieces:', self.bot.get_total_pieces(), '\n')
-        print(self.get_snake(), '\n')
+        self.display_snake()
         self.display_player_pieces()
         print('Status:', self.get_status())
 
@@ -218,7 +230,8 @@ class Engine:
         self.game_state = state
 
     def is_win(self) -> bool:
-        return self.current_player.get_total_pieces() == 0  # One of the players runs out of pieces
+        # Check if either the current player, human, or bot has no pieces left
+        return self.human.get_total_pieces() == 0 or self.bot.get_total_pieces() == 0
 
     def is_draw(self):
         first = self.snake[0][0]
@@ -248,12 +261,17 @@ class Controller:
     def __init__(self):
         self.engine = Engine()
 
-    def run(self):
+    def run(self) -> None:
         self.engine.deal_dominoes()
         self.engine.get_first_player()
         self.engine.display_interface()
-        while self.engine.game_state == GameState.IN_PROGRESS:
+
+        while True:
             self.engine.make_move()
+            self.engine.check_game_state()
+            if self.engine.game_state == GameState.GAME_OVER:
+                self.engine.display_interface()
+                break
             self.engine.switch_turn()
             self.engine.display_interface()
 
