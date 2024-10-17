@@ -96,7 +96,7 @@ class Engine:
         self.human = Human()
         self.bot = Computer()
         self.isHumanTurn = True
-        self.snake = None
+        self.snake = []
 
     def deal_dominoes(self) -> None:
         for i in range(7):
@@ -115,11 +115,11 @@ class Engine:
             self.get_first_player()
         else:
             if sum(bot_snake) > sum(human_snake):
-                self.snake = bot_snake
+                self.snake.append(bot_snake)
                 self.bot.drop_piece(bot_snake)
                 self.switch_turn()
             else:
-                self.snake = human_snake
+                self.snake.append(human_snake)
                 self.human.drop_piece(human_snake)
 
     def switch_turn(self):
@@ -134,7 +134,7 @@ class Engine:
         print('Computer pieces:', self.bot.get_pieces())
         print('Player pieces:', self.human.get_pieces())
         print('Domino snake:', self.snake)
-        print('Status:', self.human if self.isHumanTurn else self.bot)
+        print('Status:', self.bot if self.isHumanTurn else self.human)
 
     @staticmethod
     def get_engine():
