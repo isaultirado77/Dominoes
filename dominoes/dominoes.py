@@ -37,10 +37,17 @@ class Player(ABC):
     def __init__(self, name: str = 'Player'):
         self.name = name
         self.pieces = []
+        self.move_msg = ''
 
     @abstractmethod
     def move(self, index: int):
         pass
+
+    def get_move_msg(self) -> str:
+        return self.move_msg
+
+    def set_move_msg(self, msg) -> None:
+        self.move_msg = msg
 
     def take_piece(self, piece: list) -> None:
         self.pieces.append(piece)
@@ -79,6 +86,7 @@ class Player(ABC):
 class Human(Player):
     def __init__(self, name: str = None):
         super().__init__(name)
+        self.set_move_msg('It\'s your turn to make a move. Enter your command.')
 
     def move(self, index: int):
         if index == 0:
@@ -96,6 +104,7 @@ class Human(Player):
 class Computer(Player):
     def __init__(self, name: str = None):
         super().__init__(name)
+        self.set_move_msg('Computer is about to make a move. Press Enter to continue...')
 
     def move(self, index: int = None):
         total_pieces = self.get_total_pieces()
@@ -112,7 +121,6 @@ class Engine:
         self.box = Box()
         self.human = Human()
         self.bot = Computer()
-        self.is_human_turn = True
         self.current_player = self.human
         self.snake = []
 
@@ -135,14 +143,14 @@ class Engine:
             if sum(bot_snake) > sum(human_snake):
                 self.snake.append(bot_snake)
                 self.bot.drop_piece(bot_snake)
-                self.switch_turn()
             else:
                 self.snake.append(human_snake)
                 self.human.drop_piece(human_snake)
+                self.switch_turn()
 
     def switch_turn(self) -> None:
-        self.is_human_turn = not self.is_human_turn
-        self.current_player = self.human if self.is_human_turn else self.bot
+        current_player_name = self.current_player.__str__()
+        self.current_player = self.bot if current_player_name == 'Player' else self.human
 
     def clear_players_box(self) -> None:
         self.bot.clear_box()
@@ -152,9 +160,8 @@ class Engine:
         return '\n'.join(str(segment) for segment in self.snake)
 
     def get_status(self) -> str:
-        human_move = 'It\'s your turn to make a move. Enter your command.'
-        bot_move = 'Computer is about to make a move. Press Enter to continue...'
-        return f'Status: {bot_move if self.is_human_turn else human_move}'
+        move_msg = self.current_player.get_move_msg()
+        return f'Status: {move_msg}'
 
     def display_player_pieces(self):
         pieces = self.human.get_pieces()
