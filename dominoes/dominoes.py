@@ -23,6 +23,10 @@ class Box:
         self.arr.remove(piece)
         return piece
 
+    def reset_box(self):
+        self.arr.clear()
+        self.generate_pieces()
+
 
 class Player(ABC):
 
@@ -49,13 +53,17 @@ class Player(ABC):
                 current_sum = sum(piece)
                 if current_sum > max_sum:
                     max_sum = current_sum
-            return [max_sum / 2, max_sum / 2]
+            return [int(max_sum / 2), int(max_sum / 2)]
 
     def get_pieces(self):
         return self.pieces
 
     def drop_piece(self, piece: list) -> None:
-        self.pieces.remove(piece)
+        if piece:
+            self.pieces.remove(piece)
+
+    def clear_box(self):
+        self.pieces.clear()
 
 
 class Human(Player):
@@ -100,19 +108,26 @@ class Engine:
     def get_first_player(self):
         human_snake = self.human.get_snake()
         bot_snake = self.bot.get_snake()
-        if not human_snake and not bot_snake:
+        if not human_snake or not bot_snake:
+            self.box.reset_box()
+            self.clear_players_box()
             self.deal_dominoes()
             self.get_first_player()
-        if sum(bot_snake) > sum(bot_snake):
-            self.snake = bot_snake
-            self.bot.drop_piece(bot_snake)
-            self.switch_turn()
         else:
-            self.snake = human_snake
-            self.human.drop_piece(human_snake)
+            if sum(bot_snake) > sum(human_snake):
+                self.snake = bot_snake
+                self.bot.drop_piece(bot_snake)
+                self.switch_turn()
+            else:
+                self.snake = human_snake
+                self.human.drop_piece(human_snake)
 
     def switch_turn(self):
-        return True if self.isHumanTurn else False
+        self.isHumanTurn = not self.isHumanTurn
+
+    def clear_players_box(self):
+        self.bot.clear_box()
+        self.human.clear_box()
 
     def display_game_state(self):
         print('Stock pieces:', self.box.arr)
