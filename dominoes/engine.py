@@ -90,22 +90,43 @@ class Engine:
         else:
             print(self.get_snake_as_string(), '\n')
 
-    def make_move(self):
+    def make_move(self) -> None:
         if isinstance(self.current_player, Human):
             self.handle_human_move()
         else:
             self.handle_bot_move()
 
     def handle_human_move(self) -> None:
-        index, piece = self.current_player.move()
+        while True:
+            index, piece = self.current_player.move()
 
-        if self.is_valid_move(index, piece):
-            self.place_piece(index, piece)
-        else:
-            print('Illegal move. Please try again.')
+            if not index and not piece:  # Pass turn
+                self.pass_turn()
 
-    def handle_bot_move(self):
-        pass
+            if self.is_valid_move(index, piece):
+                self.place_piece(index, piece)
+                return
+            else:
+                print('Illegal move. Please try again.')
+
+    def handle_bot_move(self) -> None:
+        illegal_move_count = 0
+
+        while illegal_move_count <= 5:
+            index, piece = self.current_player.move()
+
+            if self.is_valid_move(index, piece):
+                self.place_piece(index, piece)
+                return
+
+            illegal_move_count += 1
+
+        self.pass_turn()
+
+
+    def pass_turn(self) -> None:
+        piece = self.box.give_piece()
+        self.current_player.take_piece(piece)
 
     def place_piece(self, index: int, piece: list) -> None:
         # Place piece on left side
@@ -121,6 +142,7 @@ class Engine:
                 piece = flip_piece(piece)
             # Append piece on the right
             self.snake.append(piece)
+        self.current_player.drop_piece(piece)
 
     def is_valid_move(self, index: int, piece: list) -> bool:
         # Get snake based on the given index
