@@ -1,5 +1,6 @@
 from enum import Enum
 from collections import deque
+from itertools import islice
 from box import Box
 from player import Human, Computer
 
@@ -79,16 +80,21 @@ class Engine:
         print()
 
     def display_snake(self) -> None:
-        length = len(self.snake)
-        right_limit = length - 3
-        if length > 6:
-            left = self.snake[:3]
-            right = self.snake[right_limit:]
+        left, right = self.get_left_right_slices()
+        if right:
             left_str = ''.join(str(item) for item in left)
             right_str = ''.join(str(item) for item in right)
             print(left_str + '...' + right_str + '\n')
         else:
             print(self.get_snake_as_string(), '\n')
+
+    def get_left_right_slices(self):
+        length = len(self.snake)
+        if length <= 6:
+            return list(self.snake), []  # If length <= 6, don't slice
+        left = list(islice(self.snake, 3))  # Left side
+        right = list(islice(self.snake, length - 3, length))  # Right side
+        return left, right
 
     def make_move(self) -> None:
         if isinstance(self.current_player, Human):
@@ -102,14 +108,16 @@ class Engine:
 
             if not index and not piece:  # Pass turn
                 self.pass_turn()
+                return
 
             if self.is_valid_move(index, piece):
                 self.place_piece(index, piece)
                 return
             else:
-                print('Illegal move. Please try again.')
+                print('\nIllegal move. Please try again.')
 
     def handle_bot_move(self) -> None:
+        input("BOT")
         illegal_move_count = 0
 
         while illegal_move_count <= 5:
@@ -123,25 +131,31 @@ class Engine:
 
         self.pass_turn()
 
-
     def pass_turn(self) -> None:
         piece = self.box.give_piece()
         self.current_player.take_piece(piece)
 
     def place_piece(self, index: int, piece: list) -> None:
+        flipped = False
         # Place piece on left side
         if index < 0:
             if piece[1] != self.snake[0][0]:  # Flip piece
                 piece = flip_piece(piece)
+                flipped = True
             # Append piece on the left
             self.snake.appendleft(piece)
 
         # Place piece on right side
         else:
             if piece[0] != self.snake[-1][-1]:
+                flipped = True
                 piece = flip_piece(piece)
             # Append piece on the right
             self.snake.append(piece)
+
+        if flipped:
+            piece = flip_piece(piece)
+
         self.current_player.drop_piece(piece)
 
     def is_valid_move(self, index: int, piece: list) -> bool:
@@ -163,15 +177,16 @@ class Engine:
         # Check if either the current player, human, or bot has no pieces left
         return self.human.get_total_pieces() == 0 or self.bot.get_total_pieces() == 0
 
-    def is_draw(self):
+    def is_draw(self) -> bool:
         first = self.snake[0][0]
         last = self.snake[-1][-1]
+
         if first == last:
-            count = 0
-            for piece in self.snake:
-                if first in piece:
-                    count += 1
-            return count == 8
+            count = sum(piece.count(first) for piece in self.snake)
+
+            if count >= 8:
+                return True
+
         return False
 
     def change_game_state(self, state) -> None:
