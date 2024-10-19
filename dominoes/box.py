@@ -16,9 +16,10 @@ class Box:
         print(self.arr)
 
     def give_piece(self) -> list:
-        piece = random.choice(self.arr)
-        self.arr.remove(piece)
-        return piece
+        if len(self.arr) > 0:
+            piece = random.choice(self.arr)
+            self.arr.remove(piece)
+            return piece
 
     def reset_box(self) -> None:
         self.arr.clear()

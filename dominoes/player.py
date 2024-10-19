@@ -76,9 +76,9 @@ class Human(Player):
             return None, None
         else:
             if index < 0:  # Place piece to left
-                return 0, self.get_piece_by_index(abs(index) - 1)
+                return -1, self.get_piece_by_index(abs(index) - 1)
             if index > 0:  # Place piece to right
-                return -1, self.get_piece_by_index(index - 1)
+                return 1, self.get_piece_by_index(index - 1)
 
     def __str__(self):
         return 'Player'
@@ -94,7 +94,7 @@ class Computer(Player):
         total_pieces = self.get_total_pieces()
         index = random.randint(1 - total_pieces, total_pieces - 1)
         piece = self.get_piece_by_index(index)
-        return 0 if index < 0 else -1, piece
+        return -1 if index < 0 else 1, piece
 
     def __str__(self):
         return 'Computer'

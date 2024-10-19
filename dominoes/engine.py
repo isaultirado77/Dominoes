@@ -117,10 +117,9 @@ class Engine:
                 print('\nIllegal move. Please try again.')
 
     def handle_bot_move(self) -> None:
-        input("BOT")
         illegal_move_count = 0
-
-        while illegal_move_count <= 5:
+        input()
+        while illegal_move_count <= 100:
             index, piece = self.current_player.move()
 
             if self.is_valid_move(index, piece):
@@ -139,33 +138,26 @@ class Engine:
         flipped = False
         # Place piece on left side
         if index < 0:
-            if piece[1] != self.snake[0][0]:  # Flip piece
+            if piece[1] != self.snake[0][0]:
                 piece = flip_piece(piece)
                 flipped = True
-            # Append piece on the left
             self.snake.appendleft(piece)
 
-        # Place piece on right side
         else:
             if piece[0] != self.snake[-1][-1]:
-                flipped = True
                 piece = flip_piece(piece)
-            # Append piece on the right
+                flipped = True
             self.snake.append(piece)
 
         if flipped:
             piece = flip_piece(piece)
-
         self.current_player.drop_piece(piece)
 
     def is_valid_move(self, index: int, piece: list) -> bool:
-        # Get snake based on the given index
-        snake = self.snake[index]
-        # Validate piece
-        if any(item in snake for item in piece):
-            return True
-
-        return False
+        if index < 0:  # Move on left side
+            return piece[1] == self.snake[0][0] or piece[0] == self.snake[0][0]
+        elif index > 0:  # Move on right side
+            return piece[0] == self.snake[-1][-1] or piece[1] == self.snake[-1][-1]
 
     def check_game_state(self) -> None:
         if self.is_win():
