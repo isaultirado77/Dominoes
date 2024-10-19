@@ -1,11 +1,7 @@
 # Project: Dominoes
 
-from controller import Controller
-
-
 def main():
-    controller = Controller()
-    controller.run()
+    pass
 
 
 if __name__ == "__main__":
