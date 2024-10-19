@@ -51,7 +51,7 @@ class Player(ABC):
 
 class Human(Player):
 
-    def move(self):
+    def move(self, snake: DominoSnake = None):
         index = self.prompt_player_move()
         if index == 0:
             return None, None

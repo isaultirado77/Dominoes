@@ -21,12 +21,14 @@ class DominoSnake(deque):
         return self[-1][-1]
 
     def append(self, tile) -> None:
-        if tile[0] == self.tail():
-            pass
-        elif tile[-1] == self.tail():
-            tile.reverse()
-        else:
-            raise IllegalMoveError
+        if len(self) > 0:
+            if tile[0] == self.tail():
+                pass
+            elif tile[-1] == self.tail():
+                tile.reverse()
+            else:
+                raise IllegalMoveError
+
         super().append(tile)
 
     def append_left(self, tile) -> None:

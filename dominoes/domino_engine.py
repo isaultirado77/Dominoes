@@ -1,7 +1,7 @@
 from tile_set import TileSet
 from player import Computer, Human
-from domino_snake import DominoSnake
-from constants import GameState
+from domino_snake import DominoSnake, IllegalMoveError
+from constants import GameState, DominoEnd
 
 
 class GameEngine:
@@ -71,7 +71,27 @@ class GameEngine:
         print()
 
     def make_move(self):
-        pass
+        while True:
+            domino_end, tile = self.current_player.move(self.snake)
+
+            if not domino_end and not tile:  # Pass turn
+                self.pass_turn()
+                return
+
+            try:
+                if domino_end == DominoEnd.HEAD:
+                    self.snake.appendleft(tile)
+                else:
+                    self.snake.append(tile)
+
+                self.current_player.drop_tile(tile)
+                return
+            except IllegalMoveError:
+                print('\nIllegal move. Please try again.')
+
+    def pass_turn(self) -> None:
+        tile = self.tile_set.give_tile()
+        self.current_player.take_tile(tile)
 
     def check_game_state(self) -> None:
         if self.is_win():
@@ -97,4 +117,19 @@ class GameEngine:
 
 
 class GameController:
-    pass
+    def __init__(self):
+        self.engine = GameEngine()
+
+    def run(self) -> None:
+        self.engine.deal_dominoes()
+        self.engine.get_first_player()
+        self.engine.display_interface()
+
+        while True:
+            self.engine.make_move()
+            self.engine.check_game_state()
+            if self.engine.game_state in (GameState.GAME_OVER, GameState.DRAW):
+                self.engine.display_interface()
+                break
+            self.engine.switch_turn()
+            self.engine.display_interface()
