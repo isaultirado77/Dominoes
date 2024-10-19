@@ -4,6 +4,10 @@ from box import Box
 from player import Human, Computer
 
 
+def flip_piece(piece):
+    return [piece[1], piece[0]]
+
+
 class Engine:
     def __init__(self):
         self.box = Box()
@@ -87,13 +91,45 @@ class Engine:
             print(self.get_snake_as_string(), '\n')
 
     def make_move(self):
+        if isinstance(self.current_player, Human):
+            self.handle_human_move()
+        else:
+            self.handle_bot_move()
+
+    def handle_human_move(self) -> None:
+        index, piece = self.current_player.move()
+
+        if self.is_valid_move(index, piece):
+            self.place_piece(index, piece)
+        else:
+            print('Illegal move. Please try again.')
+
+    def handle_bot_move(self):
         pass
 
-    def validate_move(self):
-        pass
+    def place_piece(self, index: int, piece: list) -> None:
+        # Place piece on left side
+        if index < 0:
+            if piece[1] != self.snake[0][0]:  # Flip piece
+                piece = flip_piece(piece)
+            # Append piece on the left
+            self.snake.appendleft(piece)
 
-    def flip_piece(self):
-        pass
+        # Place piece on right side
+        else:
+            if piece[0] != self.snake[-1][-1]:
+                piece = flip_piece(piece)
+            # Append piece on the right
+            self.snake.append(piece)
+
+    def is_valid_move(self, index: int, piece: list) -> bool:
+        # Get snake based on the given index
+        snake = self.snake[index]
+        # Validate piece
+        if any(item in snake for item in piece):
+            return True
+
+        return False
 
     def check_game_state(self) -> None:
         if self.is_win():

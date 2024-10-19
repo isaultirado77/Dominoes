@@ -70,7 +70,7 @@ class Human(Player):
             except ValueError:
                 print("Invalid input. Please try again.")
 
-    def move(self, **kwargs):
+    def move(self, **kwargs) -> tuple:
         index = self.prompt_player_move()
         if index == 0:
             return None, None
@@ -88,13 +88,13 @@ class Computer(Player):
     def __init__(self, name: str = None):
         super().__init__(name)
         self.set_move_msg('Computer is about to make a move. Press Enter to continue...')
+        self.random_counter = 0
 
     def move(self, index: int = None):
-        input()
         total_pieces = self.get_total_pieces()
         index = random.randint(1 - total_pieces, total_pieces - 1)
         piece = self.get_piece_by_index(index)
-        return 0 if index < 0 else -1, piece
+        return -1 if index < 0 else 1, piece
 
     def __str__(self):
         return 'Computer'
