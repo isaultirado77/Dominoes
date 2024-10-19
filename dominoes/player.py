@@ -91,10 +91,7 @@ class Computer(Player):
         self.random_counter = 0
 
     def move(self, index: int = None):
-        total_pieces = self.get_total_pieces()
-        index = random.randint(1 - total_pieces, total_pieces - 1)
-        piece = self.get_piece_by_index(index)
-        return -1 if index < 0 else 1, piece
+        pass
 
     def __str__(self):
         return 'Computer'
