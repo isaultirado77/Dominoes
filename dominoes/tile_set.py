@@ -21,9 +21,9 @@ class TileSet:
             self.tile_set.remove(tile)
             return tile
 
-    def reset_box(self) -> None:
+    def reset_tile_set(self) -> None:
         self.tile_set.clear()
         self.generate_tile_set()
 
-    def get_size(self) -> int:
+    def get_set_size(self) -> int:
         return len(self.tile_set)
