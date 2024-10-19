@@ -117,18 +117,7 @@ class Engine:
                 print('\nIllegal move. Please try again.')
 
     def handle_bot_move(self) -> None:
-        illegal_move_count = 0
-        input()
-        while illegal_move_count <= 100:
-            index, piece = self.current_player.move()
-
-            if self.is_valid_move(index, piece):
-                self.place_piece(index, piece)
-                return
-
-            illegal_move_count += 1
-
-        self.pass_turn()
+        pass
 
     def pass_turn(self) -> None:
         piece = self.box.give_piece()

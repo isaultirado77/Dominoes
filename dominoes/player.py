@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-import random
+from collections import deque
 import math
 
 
@@ -80,9 +80,6 @@ class Human(Player):
             if index > 0:  # Place piece to right
                 return 1, self.get_piece_by_index(index - 1)
 
-    def __str__(self):
-        return 'Player'
-
 
 class Computer(Player):
     def __init__(self, name: str = None):
@@ -90,8 +87,47 @@ class Computer(Player):
         self.set_move_msg('Computer is about to make a move. Press Enter to continue...')
         self.random_counter = 0
 
-    def move(self, index: int = None):
-        pass
+    def move(self, snake_pieces: deque = None):
+        # Concat hand pieces and snake pieces
+        total_pieces = self.pieces + list(snake_pieces)
 
-    def __str__(self):
-        return 'Computer'
+        # Get frequency dict for the total pieces
+        pieces_freq_dict = Computer.get_frequency_of_pieces(total_pieces)
+
+        # Get score dict for the pieces
+        score_dict = self.get_score_for_pieces(pieces_freq_dict)
+
+        for piece, score in score_dict.items():
+            if piece[0] in snake_pieces[0] or piece[1] in snake_pieces[0]:
+                return -1, piece
+            elif piece[0] in snake_pieces[-1] or piece[1] in snake_pieces[-1]:
+                return 1, piece
+
+        return None, None
+
+    @staticmethod
+    def get_frequency_of_pieces(total_pieces: list) -> dict:
+        # Create the frequency dict, including 0
+        freq_dict = {key: 0 for key in range(7)}
+        for piece in total_pieces:
+            # Get left and right side of the pieces
+            left, right = piece
+
+            # Plus one if left or right
+            freq_dict[left] += 1
+            freq_dict[right] += 1
+
+        return freq_dict
+
+    def get_score_for_pieces(self, freq_dict: dict) -> dict:
+        score_dict = {}
+
+        for piece in self.pieces:
+            l, r = piece
+            score_dict[piece] = freq_dict[l] + freq_dict[r]
+
+        return sort_dictionary_by_values(score_dict)  # Return sorted dictionary in descending order
+
+
+def sort_dictionary_by_values(dictionary: dict, des: bool = True) -> dict:
+    return dict(sorted(dictionary.items(), key=lambda item: item[1], reverse=des))
