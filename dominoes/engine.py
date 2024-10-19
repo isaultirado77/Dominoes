@@ -117,7 +117,17 @@ class Engine:
                 print('\nIllegal move. Please try again.')
 
     def handle_bot_move(self) -> None:
-        pass
+        index, piece = self.current_player.move(self.snake)
+
+        if not index and not piece:  # Pass turn
+            self.pass_turn()
+            return
+
+        if self.is_valid_move(index, piece):
+            self.place_piece(index, piece)
+            return
+        else:
+            print('\nComputer illegal move.\n')
 
     def pass_turn(self) -> None:
         piece = self.box.give_piece()

@@ -11,7 +11,7 @@ class Player(ABC):
         self.move_msg = ''
 
     @abstractmethod
-    def move(self, index: int):
+    def move(self, snake_pieces: deque = None):
         pass
 
     def get_move_msg(self) -> str:
@@ -21,7 +21,8 @@ class Player(ABC):
         self.move_msg = msg
 
     def take_piece(self, piece: list) -> None:
-        self.pieces.append(piece)
+        if piece:
+            self.pieces.append(piece)
 
     def get_snake(self):
         snakes = [x for x in self.pieces if x[0] == x[1]]
@@ -70,7 +71,7 @@ class Human(Player):
             except ValueError:
                 print("Invalid input. Please try again.")
 
-    def move(self, **kwargs) -> tuple:
+    def move(self, snake_pieces: deque = None) -> tuple:
         index = self.prompt_player_move()
         if index == 0:
             return None, None
@@ -80,6 +81,9 @@ class Human(Player):
             if index > 0:  # Place piece to right
                 return 1, self.get_piece_by_index(index - 1)
 
+    def __str__(self):
+        return "Player"
+
 
 class Computer(Player):
     def __init__(self, name: str = None):
@@ -88,20 +92,26 @@ class Computer(Player):
         self.random_counter = 0
 
     def move(self, snake_pieces: deque = None):
+        input()
         # Concat hand pieces and snake pieces
-        total_pieces = self.pieces + list(snake_pieces)
+        total_pieces = []
+
+        for piece in self.pieces:
+            total_pieces.append(piece)
+
+        for piece in snake_pieces:
+            total_pieces.append(piece)
 
         # Get frequency dict for the total pieces
         pieces_freq_dict = Computer.get_frequency_of_pieces(total_pieces)
 
         # Get score dict for the pieces
         score_dict = self.get_score_for_pieces(pieces_freq_dict)
-
         for piece, score in score_dict.items():
-            if piece[0] in snake_pieces[0] or piece[1] in snake_pieces[0]:
-                return -1, piece
-            elif piece[0] in snake_pieces[-1] or piece[1] in snake_pieces[-1]:
-                return 1, piece
+            if piece[0] == snake_pieces[0][0] or piece[1] == snake_pieces[0][0]:
+                return -1, list(piece)
+            elif piece[0] == snake_pieces[-1][-1] or piece[1] == snake_pieces[-1][-1]:
+                return 1, list(piece)
 
         return None, None
 
@@ -124,9 +134,12 @@ class Computer(Player):
 
         for piece in self.pieces:
             l, r = piece
-            score_dict[piece] = freq_dict[l] + freq_dict[r]
+            score_dict[(l, r)] = freq_dict[l] + freq_dict[r]
 
         return sort_dictionary_by_values(score_dict)  # Return sorted dictionary in descending order
+
+    def __str__(self):
+        return "Computer"
 
 
 def sort_dictionary_by_values(dictionary: dict, des: bool = True) -> dict:
