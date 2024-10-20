@@ -65,7 +65,7 @@ class GameEngine:
 
     def display_player_tiles(self) -> None:
         pieces = self.human.get_hand_tiles()
-        print('Your pieces:')
+        print('\nYour pieces:')
         for i, piece in enumerate(pieces):
             print(f'{i + 1}:{piece}')
         print()
@@ -80,9 +80,9 @@ class GameEngine:
 
             try:
                 if domino_end == DominoEnd.HEAD:
-                    self.snake.appendleft(tile)
+                    self.snake.append_head(tile)
                 else:
-                    self.snake.append(tile)
+                    self.snake.append_tail(tile)
 
                 self.current_player.drop_tile(tile)
                 return

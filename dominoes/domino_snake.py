@@ -1,5 +1,5 @@
 from _collections import deque
-
+from utils import reverse_tile
 
 class Error(Exception):
     """
@@ -20,24 +20,26 @@ class DominoSnake(deque):
     def tail(self) -> int:
         return self[-1][-1]
 
-    def append(self, tile) -> None:
+    def append_tail(self, tile) -> None:
         if len(self) > 0:
             if tile[0] == self.tail():
                 pass
-            elif tile[-1] == self.tail():
-                tile.reverse()
+            elif tile[1] == self.tail():
+                tile = [tile[1], tile[0]]
+
             else:
                 raise IllegalMoveError
 
         super().append(tile)
 
-    def append_left(self, tile) -> None:
-        if tile[-1] == self.head():
+    def append_head(self, tile) -> None:
+        if tile[1] == self.head():
             pass
         elif tile[0] == self.head():
-            tile.reverse()
+            tile = [tile[1], tile[0]]
         else:
             raise IllegalMoveError
+
         super().appendleft(tile)
 
     def to_list(self) -> list:

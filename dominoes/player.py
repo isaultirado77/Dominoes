@@ -37,7 +37,10 @@ class Player(ABC):
 
     def drop_tile(self, tile: list) -> None:
         if tile:
-            self.hand_tiles.remove(tile)
+            if tile in self.hand_tiles:
+                self.hand_tiles.remove(tile)
+            elif tile.reverse() in self.hand_tiles:
+                self.hand_tiles.remove(tile.reverse())
 
     def clear_hand_tiles(self) -> None:
         self.hand_tiles.clear()

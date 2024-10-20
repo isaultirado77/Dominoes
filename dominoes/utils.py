@@ -12,3 +12,6 @@ def concat_lists(a: list, b: list):
         concat_list.append(element)
 
     return concat_list
+
+def reverse_tile(tile: list) -> list:
+    return [tile[1], tile[0]]
